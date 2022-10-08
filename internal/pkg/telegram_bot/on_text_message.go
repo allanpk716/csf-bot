@@ -15,6 +15,8 @@ func (t *TelegramBot) onTextMessage(c tb.Context) error {
 		return t.verificationProcess(c)
 	}
 	// 否则走广告阻止监听
+	//logger.Infoln(c.Chat().Title, "GroupID:", c.Chat().ID)
+
 	return t.adBlock(c)
 }
 

@@ -18,6 +18,7 @@ type TelegramBot struct {
 	bot                     *tb.Bot
 	settings                *settings.Settings
 	messageTokenMap         cmap.ConcurrentMap[string]
+	oneTimePassCodeMap      cmap.ConcurrentMap[string]
 	userCaptchaCodeTable    *captcha.CodeTable
 	userCaptchaPendingTable *captcha.PendingTable
 }
@@ -55,6 +56,7 @@ func NewTelegramBot(settings *settings.Settings) *TelegramBot {
 		bot:                     b,
 		settings:                settings,
 		messageTokenMap:         cmap.New[string](),
+		oneTimePassCodeMap:      cmap.New[string](),
 		userCaptchaCodeTable:    captcha.NewCodeTable(),
 		userCaptchaPendingTable: captcha.NewPendingTable(),
 	}
@@ -74,7 +76,12 @@ func (t *TelegramBot) Start() {
 	t.bot.Handle(tb.OnUserLeft, func(c tb.Context) error {
 		return c.Delete()
 	})
+	// 主要的验证接口
 	t.bot.Handle(command.CMD_Start, t.startCaptcha)
+	// 手动验证接口，需要被屏蔽使用一个一次性的验证码
+	t.bot.Handle(command.CMD_ManulPassVerify, t.manulPassVerify)
+	// 提交一个一次性的验证码，给屏蔽用户用
+	t.bot.Handle(command.CMD_SetOneTimePassCode, t.setOneTimePassCode, t.isRootMiddleware)
 
 	logger.Infoln("Telegram Bot Start")
 
@@ -95,6 +102,16 @@ func (t *TelegramBot) isManage(chat *tb.Chat, userId int64) bool {
 	return false
 }
 
+// isRoot 判断是否为超管
+func (t *TelegramBot) isRoot(userid int64) bool {
+	for _, id := range t.settings.ManageUsers {
+		if userid == id {
+			return true
+		}
+	}
+	return false
+}
+
 // isManageMiddleware 管理员中间件
 func (t *TelegramBot) isManageMiddleware(next tb.HandlerFunc) tb.HandlerFunc {
 	return func(c tb.Context) error {
@@ -105,5 +122,15 @@ func (t *TelegramBot) isManageMiddleware(next tb.HandlerFunc) tb.HandlerFunc {
 			Text:      "您未拥有管理员权限，请勿点击！",
 			ShowAlert: true,
 		})
+	}
+}
+
+// isRootMiddleware 超管中间件
+func (t *TelegramBot) isRootMiddleware(next tb.HandlerFunc) tb.HandlerFunc {
+	return func(c tb.Context) error {
+		if c.Message().Private() == false || t.isRoot(c.Sender().ID) == false {
+			return nil
+		}
+		return next(c)
 	}
 }

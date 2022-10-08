@@ -7,17 +7,19 @@ import (
 )
 
 type Settings struct {
-	configFPath                 string // 配置文件的路径
-	BotToken                    string // Telegram bot token
-	ProxyUrl                    string // http://127.0.0.1:1080 or socks5://127.0.0.1:1081
-	CaptchaTimeout              int    // 验证超时时间，单位秒
-	UserJoinMessageDelAfter     int    // 用户加入群组后，发送的欢迎消息，多少秒后删除
-	NumberOfForbiddenWords      int    // 禁止词数量
-	BlockTime                   int64  // 封禁时间，单位秒，-1 是永久
-	UserJoinMessage             string // 用户加入群组的欢迎信息
-	CaptchaMessage              string // 验证码的欢迎信息
-	VerificationCompleteMessage string // 验证完成的欢迎信息
-	BlockMessage                string // 被封禁的信息
+	configFPath                 string  // 配置文件的路径
+	BotToken                    string  // Telegram bot token
+	ProxyUrl                    string  // http://127.0.0.1:1080 or socks5://127.0.0.1:1081
+	ManageUsers                 []int64 // 超级管理员userid数组，以英文逗号分割，例如123,456,789
+	GroupIDs                    []int64 // 群组ID数组，以英文逗号分割，例如123,456,789
+	CaptchaTimeout              int     // 验证超时时间，单位秒
+	UserJoinMessageDelAfter     int     // 用户加入群组后，发送的欢迎消息，多少秒后删除
+	NumberOfForbiddenWords      int     // 禁止词数量
+	BlockTime                   int64   // 封禁时间，单位秒，-1 是永久
+	UserJoinMessage             string  // 用户加入群组的欢迎信息
+	CaptchaMessage              string  // 验证码的欢迎信息
+	VerificationCompleteMessage string  // 验证完成的欢迎信息
+	BlockMessage                string  // 被封禁的信息
 }
 
 func NewSettings() *Settings {
